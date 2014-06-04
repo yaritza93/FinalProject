@@ -1,6 +1,6 @@
 #BlueJ class context
-comment0.params=
-comment0.target=Show()
-comment1.params=g
-comment1.target=void\ paintComponent(java.awt.Graphics)
+comment0.params=controller
+comment0.target=Show(Hangman)
+comment1.params=
+comment1.target=void\ paintComponent()
 numComments=2

@@ -1,114 +1,145 @@
-
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
-import java.util.ArrayList;
+import javax.swing.border.Border;
+import java.util.*;
+import java.awt.Image;
+/**
+ * @author Yaritza Ascencio
+ */
+public class Hangman {
+    Show show;
+    JButton exit    = null;
+    JButton newGame = null;    
+    Panes pane;
+    JLabel    wordArea    = null;
+    JLabel    messageArea = null;
+    java.util.List alphaButtonList = new ArrayList();
+    //JButton[] alphaButtonList = new JButton[26];
+    Iterator alphaIterator = null;
+    static Hangman app = new Hangman();
+    boolean reset        = true;
+    boolean disable      = false;
+    boolean donWrap      = false;
+    boolean wrap         = true;
+    boolean head    = false;
+    boolean body    = false;
+    boolean leftArm = false;
+    boolean rightArm= false;
+    boolean leftLeg = false;
+    boolean rightLeg= false;
 
-public class Hangman extends JPanel {
+    String[] words = {
+            "secret", "invented", "mouse", "clean", "summer",
+            "fall", "great", "mother", "spaceship", "aliens",
+            "crayons", "different", "computer"
+        };
+    String winnerMessage = "Congratulations!  You win!";
+    String losingPrefix  = "Sorry the anwswer was: ";
+    String currentGuess;
+    String word;
 
-    private Show show; 
+    int numberWrong       = 0;
+    int numberOfBodyParts = 6;
+    int next              = 0;
+   
+    public  void setUpNewGame() {
+        numberWrong = 0;
+        messageArea.setText("May the Odds be ever in your favor");
 
-    private ArrayList<JButton> alphabetButtons = new ArrayList<JButton>(); 
-    private JButton nextButton;    
-    private JButton giveUpButton;  
-
-    public String message;     
-    private String[] wordlist;  
-    private String word;        
-    private String guesses;     
-    private boolean gameOver;   
-    private int badGuesses;    
-
-    public Hangman() {
-
-        ButtonControl buttonControl = new ButtonControl(); 
-
-        show = new Show();  
-        JPanel bottom = new JPanel();  
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new GridLayout(1,6));
-        setLayout(new BorderLayout(3,3));  
-        add(show, BorderLayout.CENTER); 
-        add(bottom, BorderLayout.SOUTH);
-        add(subPanel, BorderLayout.NORTH);
-
-        for (char alphabet = 'A'; alphabet <='Z'; alphabet++){
-            String buttonText = String.valueOf(alphabet);
-            JButton letterButton = new JButton(buttonText);
-            alphabetButtons.add(letterButton);
-            letterButton.addActionListener(buttonControl);
-            subPanel.add(letterButton, BorderLayout.CENTER);
+        Iterator alphaIterator = alphaButtonList.iterator();
+        while( alphaIterator.hasNext() ) {
+            ( (JButton)alphaIterator.next() ).setEnabled( reset );
         }
 
-        nextButton = new JButton("Next word");
-        nextButton.addActionListener(buttonControl);
-        bottom.add(nextButton);
+        newGame.setEnabled( disable );
 
-        giveUpButton = new JButton("Give up");
-        giveUpButton.addActionListener(buttonControl);
-        bottom.add(giveUpButton);
+        wordArea.setBackground(Color.BLUE);
 
-        JButton quit = new JButton("Quit");
-        quit.addActionListener(buttonControl);
-        bottom.add(quit);
+        double numb = Math.random();
+        next = (int)( numb * words.length );
+        word  = words[next];
 
-        setBackground( new Color(204,255,229) );
-        setBorder(BorderFactory.createLineBorder(new Color(100,0,0), 3));
-
-        wordlist = new String[15];
-        wordlist[0] = "taco";
-        wordlist[1] = "secrets";
-        wordlist[2] = "chest";
-        wordlist[3] = "invented";
-        wordlist[4] = "mouse";
-        wordlist[5] = "four";
-        wordlist[6] = "wednesdays";
-        wordlist[7] = "three";
-        wordlist[8] = "rainbows";
-        wordlist[9] = "hawaii";
-        wordlist[10] = "hot dog";
-        wordlist[11] = "butter";
-        wordlist[12] = "october";
-        wordlist[13] = "haters";
-        wordlist[14] = "africa";
-
-        startGame();
-    } 
-    private void startGame() {
-        gameOver = false;
-        guesses = "";
-        badGuesses = 0;
-        nextButton.setEnabled(false);
-        for (int i = 0; i < alphabetButtons.size(); i++) {
-            alphabetButtons.get(i).setEnabled(true);
+        currentGuess = "-";
+        for( int i=0; i<word.length()-1; i++) {
+            currentGuess = currentGuess.concat("-");
         }
-        giveUpButton.setEnabled(true);
-        int index = (int)(Math.random()*wordlist.length);
-        word = wordlist[index-1] ;
-        word = word.toUpperCase();
-        message = "The word has " + word.length() + " letters.  Let's play Hangman!";
+        wordArea.setText( currentGuess );
+
+        head    = false;
+        body    = false;
+        leftArm = false;
+        rightArm= false;
+        leftLeg = false;
+        rightLeg= false;
+        show.repaint();
+
     }
 
-    private boolean wordIsComplete() {
-        for (int i = 0; i < word.length(); i++) {
-            char ch = word.charAt(i);
-            if ( guesses.indexOf(ch) == -1 ) {
-                return false;
+    public void processAnswer(String answer) {      
+        char newCharacter = answer.charAt(0);
+        String nextGuess    = "";
+        boolean foundAMatch = false;
+        for( int i=0; i<word.length(); i++ ) {
+            char characterToMatch = word.charAt(i);
+            if( characterToMatch == newCharacter ) {
+                nextGuess = nextGuess.concat( String.valueOf(newCharacter) );
+                foundAMatch = true;
+            }
+            else {
+                nextGuess = nextGuess.concat(String.valueOf
+                    ( currentGuess.charAt(i) ));
             }
         }
-        return true;
+        currentGuess = nextGuess;
+        wordArea.setText( currentGuess );
+
+        if( currentGuess.equals( word ) ) {
+
+            Iterator alphaIterator = alphaButtonList.iterator();
+            while( alphaIterator.hasNext() ) {
+                ( (JButton)alphaIterator.next() ).setEnabled( disable );
+            }
+            messageArea.setText( winnerMessage );
+            newGame.setEnabled( reset );
+            exit.setEnabled( reset );
+        }
+
+        else {
+            if( !foundAMatch ) {
+                numberWrong++;
+                switch (numberWrong){
+                    case 1: { head     = true; break; }
+                    case 2: { body     = true; break; }
+                    case 3: { leftArm  = true; break; }
+                    case 4: { rightArm = true; break; }
+                    case 5: { leftLeg  = true; break; }
+                    case 6: { rightLeg = true; break; }
+                    default: System.out.println("You are dead!");
+                }
+                show.repaint();
+            }
+
+            if( numberWrong >= numberOfBodyParts ) {
+
+                Iterator alphaIterator = alphaButtonList.iterator();
+                while( alphaIterator.hasNext() ) {
+                    ( (JButton)alphaIterator.next() ).setEnabled( disable );
+                }
+                messageArea.setText( losingPrefix + word );
+                newGame.setEnabled( reset );
+                exit.setEnabled( reset );
+            }
+        }
     }
 
+
     public static void main(String[] args) {
-        JFrame window = new JFrame("Hangman"); 
-        Hangman panel = new Hangman();  
-        window.setContentPane(panel);   
-        window.pack();  
-        window.setResizable(false); 
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize(); 
-        window.setLocation( (screen.width - window.getWidth())/2, 
-            (screen.height - window.getHeight())/2 );
-        window.setVisible(true);  
+        app.setUpNewGame();
+        
+        JFrame frame = new JFrame("Hangman");
+        frame.setSize( new Dimension(640,480) );
+        
+        frame.setVisible(true);
     }
-} 
+}
